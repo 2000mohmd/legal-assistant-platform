@@ -27,9 +27,34 @@ fabricatable:
   substitutes for that.
 - **Real corpus** — no firm documents have been ingested; `ingestion/loader.py`
   will return `[]` until `data/practice_areas/<area>/corpus/*.json` exists.
-- **Retrieval, verification, council mode, citation graph** — the five
-  techniques in root CLAUDE.md are Phase 1+; only the schemas and seams they
-  need exist so far.
+- **Wiring any of the below to a real practice area** — the root brief's
+  "How to work in this repo" section is explicit: no retrieval/generation
+  code gets written *for a practice area* until that area's gold set exists
+  and is reviewed. Marriage & family's doesn't yet, so nothing below is
+  wired to real content.
+
+Four of the five non-negotiable techniques already have real, tested
+implementations, because their *algorithms* are content-agnostic and don't
+need a gold set to exist — only applying them to a specific area's real
+corpus does:
+
+- `verification/citation_check.py` — the mechanical citation-verification
+  pass (technique #3): checks a citation's source/article/quoted-text
+  against a `SourceDocument`, always returns passed/flagged + a reason.
+- `verification/supersession.py` — the citation-and-supersession graph
+  (technique #4): resolves an article to its current version, raising
+  loudly on cycles or dangling links rather than guessing.
+- `retrieval/hybrid_search.py` — Reciprocal Rank Fusion (technique #1):
+  combines ranked ID lists from a dense retriever and BM25.
+- `council/orchestrator.py` — council-mode orchestration (technique #5):
+  calls N models on the same prompt and flags disagreement.
+
+Still Phase 1+ (need a real corpus/gold set to mean anything): actually
+building the dense-embedding + BM25 indexes that feed `hybrid_search`,
+deciding which real marriage_family questions are "high-stakes" enough to
+route through `run_council`, and clause-level chunking of a real corpus
+(technique #2 — the `Article` model already exists for this, but nothing
+populates it from real documents yet).
 
 ## Run it
 
@@ -38,7 +63,7 @@ so no separate Python setup is needed.
 
 ```bash
 uv sync --extra dev
-uv run pytest        # 21 passed
+uv run pytest        # 44 passed
 uv run ruff check .  # clean
 uv run validate-gold-set data/practice_areas/marriage_family/gold_set/*.json
 ```
@@ -54,6 +79,9 @@ src/mizan/
   schemas/      # gold_set, documents, templates — pydantic models only
   ingestion/    # redact.py (PII seam, placeholder), loader.py
   generation/   # claude_client.py (thin SDK wrapper), document_assembly.py (gated)
+  verification/ # citation_check.py, supersession.py — real, tested, content-agnostic
+  retrieval/    # hybrid_search.py (RRF fusion) — real, tested, content-agnostic
+  council/      # orchestrator.py (council mode) — real, tested, content-agnostic
   cli/          # validate_gold_set.py
 data/practice_areas/marriage_family/
   gold_set/     # empty — see Status above
