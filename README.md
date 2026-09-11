@@ -9,14 +9,19 @@
 > until the partner's written regulatory confirmation lands, and even then
 > only for template-level, lawyer-approved templates.
 
-This repo has two pieces:
+This repo has three pieces:
 
 - **This directory** (`src/mizan/`, `tests/`, `data/`) — the backend pipeline
   skeleton documented below.
-- **`frontend/`** — the Next.js visualization pass (mocked backend, all three
-  product flows). See [`frontend/README.md`](frontend/README.md). The two
-  are not wired together yet: the frontend talks only to its own mock API
-  routes, not to anything in `src/mizan/`.
+- **`frontend/`** — the Next.js app. See [`frontend/README.md`](frontend/README.md)
+  — read its "Current status" section first, since it now has real
+  Supabase auth/database wiring that is code-complete but not yet
+  runtime-verified (this machine has no Docker). This is separate from
+  `src/mizan/`: the frontend talks to Supabase directly for accounts/data,
+  not to anything in `src/mizan/` — the AI/legal content it shows is still
+  fixture data either way, pending real gold-set content.
+- **`supabase/`** — the database schema (migrations) and demo seed data
+  backing the frontend's real accounts/persistence.
 
 ## Status
 
