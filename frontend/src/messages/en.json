@@ -1,0 +1,91 @@
+{
+  "common": {
+    "firmPlaceholder": "[Firm Name]",
+    "brandTagline": "A full lawyer in your hand",
+    "toggleLabel": "العربية",
+    "demoWatermark": "Demo data · not real legal content",
+    "internalTool": "Internal tool",
+    "backHome": "Home"
+  },
+  "home": {
+    "title": "How can we help you today?",
+    "subtitle": "Choose the service you need. Each area only launches once it has cleared its own accuracy bar with our lawyers.",
+    "openService": "Start",
+    "comingSoon": "Coming soon",
+    "comingSoonNote": "Not yet live — still under review with our lawyers."
+  },
+  "marriageNav": {
+    "chat": "Ask our assistant",
+    "documents": "Marriage document assistance"
+  },
+  "chat": {
+    "title": "Marriage & family law guidance",
+    "subtitle": "Ask your question — every answer shows the sources we mechanically verified it against.",
+    "inputPlaceholder": "Type your question...",
+    "send": "Send",
+    "you": "You",
+    "assistant": "Assistant",
+    "verified": "Citations verified",
+    "flagged": "Citation unverifiable — flagged for review",
+    "citationsLabel": "Cited sources",
+    "expandSource": "View retrieved source text",
+    "highStakesTitle": "High-stakes question",
+    "highStakesBody": "This question was cross-checked against multiple AI models (council mode) to surface any disagreement rather than silently picking one answer.",
+    "sampleQuestions": [
+      "Can part of the dowry be deferred?",
+      "Who has custody rights after divorce?"
+    ]
+  },
+  "documents": {
+    "title": "Marriage-contract condition assistance",
+    "subtitle": "Tell us about your situation and the conditions you'd like considered, and we'll help draft them for your lawyer's review.",
+    "situationLabel": "Briefly describe your situation",
+    "situationPlaceholder": "e.g. My fiancée and I would like to document a few specific conditions before signing the contract.",
+    "conditionsLabel": "Conditions you'd like considered",
+    "conditionsPlaceholder": "e.g. continuing my work after marriage, an independent residence, part of the dowry recorded as deferred.",
+    "factsLabel": "Any other relevant facts",
+    "factsPlaceholder": "Details that help your lawyer draft this precisely.",
+    "submit": "Draft the conditions",
+    "draftTitle": "Suggested draft conditions",
+    "pendingReviewTitle": "Your lawyer is reviewing this",
+    "pendingReviewBody": "This draft has not been released yet. A licensed lawyer reviews it before it reaches you — this reflects the per-instance review model used for any condition with financial or custodial impact.",
+    "templateApprovedTitle": "Reviewed & approved template — [Firm Name]",
+    "templateApprovedBody": "This template and the logic that filled it in were already thoroughly reviewed and approved by a licensed lawyer.",
+    "demoToggleLabel": "Demo: switch review state",
+    "demoToggleNote": "This toggle is for demonstration only, to show both possible states — the actual default is \"pending review.\"",
+    "najizTitle": "What happens next: the Najiz platform",
+    "najizBody": "The marriage contract itself is finalized exclusively by the Ministry of Justice through the Najiz platform, executed by an official marriage officer (ma'zoun). This app does not issue the marriage contract or replace that government process — its role is only to help prepare the conditions and documents you bring to it.",
+    "najizCta": "Learn more about the Najiz process"
+  },
+  "review": {
+    "gateTitle": "Sign in to the internal review console",
+    "gateSubtitle": "This is an internal tool for our legal team. Pick a role to continue (a stand-in for real authentication).",
+    "roleLawyer": "Continue as reviewing lawyer",
+    "queueTitle": "Review queue",
+    "colArea": "Practice area",
+    "colSubmitted": "Submitted",
+    "colStatus": "Status",
+    "colStakes": "Stakes",
+    "highStakes": "High-stakes",
+    "routine": "Routine",
+    "detailTitle": "Item detail",
+    "aiDraftLabel": "AI draft",
+    "verificationLabel": "Citation verification results",
+    "passed": "Passed",
+    "flaggedResult": "Flagged",
+    "approve": "Approve",
+    "editApprove": "Edit then approve",
+    "reject": "Reject",
+    "editingTitle": "Edit draft",
+    "saveEdit": "Save & approve",
+    "diffTitle": "Diff: AI draft vs. edited final",
+    "auditTitle": "Audit trail",
+    "statusPending": "Pending",
+    "statusApproved": "Approved",
+    "statusEditedApproved": "Approved (edited)",
+    "statusRejected": "Rejected",
+    "backToQueue": "Back to queue",
+    "cancel": "Cancel",
+    "resolvedNote": "A decision has already been recorded for this item."
+  }
+}
