@@ -13,7 +13,11 @@ VALID_ENTRY = {
     "question": "Test question?",
     "answer": "Test answer.",
     "citations": [
-        {"source_document": "TEST-STATUTE", "article_or_madda": "TEST-ART-1", "quoted_text": "Test."}
+        {
+            "source_document": "TEST-STATUTE",
+            "article_or_madda": "TEST-ART-1",
+            "quoted_text": "Test.",
+        }
     ],
     "authored_by": "test-lawyer-a",
     "reviewed_by": "test-lawyer-b",

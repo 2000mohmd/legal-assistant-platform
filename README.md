@@ -24,13 +24,13 @@ fabricatable:
 
 ## Run it
 
-This machine did not have Python installed when this skeleton was written,
-so none of the below has actually been executed here — treat it as
-untested until you run it once yourself.
+Verified working: `uv` installs Python 3.11 itself (this machine had none),
+so no separate Python setup is needed.
 
 ```bash
 uv sync --extra dev
-uv run pytest
+uv run pytest        # 21 passed
+uv run ruff check .  # clean
 uv run validate-gold-set data/practice_areas/marriage_family/gold_set/*.json
 ```
 
