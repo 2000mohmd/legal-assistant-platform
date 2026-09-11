@@ -5,9 +5,17 @@ ship any consumer-facing document-generation feature until the partner has
 confirmed in writing that a law firm may offer AI-assisted document
 preparation directly to the public without per-instance lawyer review (or,
 for template-level tracks, until a lawyer has approved that specific
-template). This module is intentionally inert in Phase 0: it defines the
-seam's shape but always refuses to run, so nothing can be wired up to reach
-a real client through it by accident.
+template). `DOCUMENT_GENERATION_ENABLED = False` keeps this module inert by
+default so nothing can be wired up to reach a real client through it by
+accident.
+
+The rendering logic below (Jinja-style templating per the root CLAUDE.md
+suggested stack) is itself content-agnostic pure string substitution — it
+needs no gold set to write, same as the techniques in verification/,
+retrieval/, and ingestion/chunking.py. It is gated behind
+DOCUMENT_GENERATION_ENABLED and the per-document review-model checks, not
+behind "not implemented yet," because the actual risk here is regulatory
+and review-process, not algorithmic.
 
 When the blocking item is resolved for a given template, flipping this on
 still requires the review-model decision to be present and honored per
@@ -16,6 +24,8 @@ never defaulted, per the Non-Negotiables.
 """
 
 from __future__ import annotations
+
+from jinja2 import Environment
 
 from mizan.schemas.templates import DocumentTemplate
 
@@ -46,4 +56,12 @@ def assemble_document(template: DocumentTemplate, filled_fields: dict[str, str])
             "lawyer_approved — cannot ship unreviewed output."
         )
 
-    raise NotImplementedError("Template-filling logic is not implemented yet (Phase 1+).")
+    missing = [
+        field.name
+        for field in template.fields
+        if field.required and field.name not in filled_fields
+    ]
+    if missing:
+        raise ValueError(f"Missing required fields for template '{template.id}': {missing}")
+
+    return Environment(autoescape=False).from_string(template.body_template).render(**filled_fields)

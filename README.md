@@ -2,10 +2,12 @@
 
 > Read the root `CLAUDE.md` (in the parent `Downloads/` folder) first. This
 > is Phase 0: repo structure and typed seams for retrieval, verification,
-> generation, and document-assembly — not working retrieval/generation
-> logic. Nothing here is gated open; document generation is disabled by
-> default (`src/mizan/generation/document_assembly.py`) pending the
-> partner's written regulatory confirmation.
+> generation, and document-assembly. Nothing here is gated open: document
+> assembly's *rendering logic* is real (Jinja templating), but
+> `DOCUMENT_GENERATION_ENABLED = False` in
+> `src/mizan/generation/document_assembly.py` means it never actually runs
+> until the partner's written regulatory confirmation lands, and even then
+> only for template-level, lawyer-approved templates.
 
 This repo has two pieces:
 
@@ -66,7 +68,7 @@ so no separate Python setup is needed.
 
 ```bash
 uv sync --extra dev
-uv run pytest        # 48 passed
+uv run pytest        # 54 passed
 uv run ruff check .  # clean
 uv run validate-gold-set data/practice_areas/marriage_family/gold_set/*.json
 ```
@@ -81,7 +83,7 @@ the real API).
 src/mizan/
   schemas/      # gold_set, documents, templates — pydantic models only
   ingestion/    # redact.py (PII seam, placeholder), loader.py, chunking.py (real, tested)
-  generation/   # claude_client.py (thin SDK wrapper), document_assembly.py (gated)
+  generation/   # claude_client.py (thin SDK wrapper), document_assembly.py (real Jinja rendering, hard-gated closed)
   verification/ # citation_check.py, supersession.py — real, tested, content-agnostic
   retrieval/    # hybrid_search.py (RRF fusion) — real, tested, content-agnostic
   council/      # orchestrator.py (council mode) — real, tested, content-agnostic
