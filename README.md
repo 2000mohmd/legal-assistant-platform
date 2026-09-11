@@ -7,6 +7,15 @@
 > default (`src/mizan/generation/document_assembly.py`) pending the
 > partner's written regulatory confirmation.
 
+This repo has two pieces:
+
+- **This directory** (`src/mizan/`, `tests/`, `data/`) — the backend pipeline
+  skeleton documented below.
+- **`frontend/`** — the Next.js visualization pass (mocked backend, all three
+  product flows). See [`frontend/README.md`](frontend/README.md). The two
+  are not wired together yet: the frontend talks only to its own mock API
+  routes, not to anything in `src/mizan/`.
+
 ## Status
 
 Structure only, per the Phase 0 scope. Specifically NOT done yet, and not

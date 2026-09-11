@@ -9,6 +9,10 @@ Read `frontend-CLAUDE.md` (and the root `CLAUDE.md`) first — this is a
 backend** so the product shape can be clicked through before retrieval,
 verification, and generation exist for real.
 
+The real backend pipeline skeleton lives one level up, at the repo root
+(`../src/mizan/`) — see [`../README.md`](../README.md). It is not wired to
+this frontend yet.
+
 ## Run it
 
 ```bash
