@@ -1,10 +1,18 @@
-import { useTranslations } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Scale } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { LocaleToggle } from "./locale-toggle";
+import { SignOutButton } from "./sign-out-button";
 
-export function SiteHeader() {
-  const t = useTranslations("common");
+export async function SiteHeader() {
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: "common" });
+  const authT = await getTranslations({ locale, namespace: "auth" });
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   return (
     <header className="border-b border-line bg-white">
@@ -17,6 +25,16 @@ export function SiteHeader() {
         </Link>
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-muted sm:inline">{t("brandTagline")}</span>
+          {user ? (
+            <SignOutButton />
+          ) : (
+            <Link
+              href="/login"
+              className="rounded-full border border-line px-3.5 py-1.5 text-sm font-medium text-body hover:bg-primary-tint"
+            >
+              {authT("signIn")}
+            </Link>
+          )}
           <LocaleToggle />
         </div>
       </div>

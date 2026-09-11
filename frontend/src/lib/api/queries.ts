@@ -32,7 +32,6 @@ export function useReviewAction(id: string) {
   return useMutation({
     mutationFn: (payload: {
       action: "approved" | "edited_approve" | "rejected";
-      reviewer: string;
       editedDraft?: string;
     }) => apiClient.post<{ item: ReviewItem }>(`/api/review/${id}`, payload),
     onSuccess: () => {

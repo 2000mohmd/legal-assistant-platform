@@ -1,6 +1,12 @@
 import { test, expect } from "@playwright/test";
+import { signInViaMagicLink } from "./helpers/auth";
 
-test("document intake produces a drafted output gated as pending lawyer review by default", async ({ page }) => {
+// NOTE: requires local Supabase running (`supabase start`) — untested in
+// any environment so far (see helpers/auth.ts).
+test("document intake produces a drafted output gated as pending lawyer review by default", async ({
+  page,
+}, testInfo) => {
+  await signInViaMagicLink(page, `docs-test-${testInfo.testId}@example.com`);
   await page.goto("/en/marriage/documents");
 
   await page.getByLabel("Briefly describe your situation").fill("Demo situation for testing.");

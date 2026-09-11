@@ -6,8 +6,6 @@ import { Link } from "@/i18n/navigation";
 import { useReviewAction, useReviewItem } from "@/lib/api/queries";
 import { ReviewDetailSplit } from "@/components/review/review-detail-split";
 
-const DEMO_REVIEWER = "Demo Reviewing Lawyer";
-
 export default function ReviewItemPage() {
   const t = useTranslations("review");
   const params = useParams<{ itemId: string }>();
@@ -29,9 +27,7 @@ export default function ReviewItemPage() {
       ) : (
         <ReviewDetailSplit
           item={data.item}
-          onAction={(actionType, editedDraft) =>
-            action.mutate({ action: actionType, reviewer: DEMO_REVIEWER, editedDraft })
-          }
+          onAction={(actionType, editedDraft) => action.mutate({ action: actionType, editedDraft })}
         />
       )}
     </div>

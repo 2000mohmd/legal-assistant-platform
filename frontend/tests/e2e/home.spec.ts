@@ -19,8 +19,12 @@ test("locale toggle switches to English and flips direction", async ({ page }) =
   await expect(page.getByRole("heading", { level: 1 })).toContainText("How can we help you today?");
 });
 
-test("marriage tile navigates into the chat flow", async ({ page }) => {
+test("marriage tile redirects a signed-out visitor to login", async ({ page }) => {
+  // Marriage & family now requires a real signed-in user (Supabase auth) —
+  // see (client)/marriage/layout.tsx. Signed-in-flow tests live in
+  // marriage-chat.spec.ts / marriage-documents.spec.ts using the
+  // signInViaMagicLink helper.
   await page.goto("/en");
   await page.getByRole("link", { name: /Marriage & Family Law/ }).click();
-  await expect(page).toHaveURL(/\/en\/marriage\/chat$/);
+  await expect(page).toHaveURL(/\/en\/login\?redirectTo=%2Fmarriage%2Fchat$/);
 });

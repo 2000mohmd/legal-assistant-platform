@@ -1,5 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { signInViaMagicLink } from "./helpers/auth";
 
+// /marriage/* and /review redirect a signed-out visitor to /login, but the
+// dir/lang attributes are set on <html> by the outer layout regardless of
+// which page ends up rendering, so these checks hold either way.
 const screens = ["/", "/marriage/chat", "/marriage/documents", "/review"];
 
 for (const screen of screens) {
@@ -14,7 +18,12 @@ for (const screen of screens) {
   });
 }
 
-test("numeric citation identifiers stay LTR inside an Arabic-direction page", async ({ page }) => {
+// NOTE: requires local Supabase running — untested in any environment so
+// far (see helpers/auth.ts).
+test("numeric citation identifiers stay LTR inside an Arabic-direction page", async ({
+  page,
+}, testInfo) => {
+  await signInViaMagicLink(page, `rtl-test-${testInfo.testId}@example.com`, "ar");
   await page.goto("/ar/marriage/chat");
   await page.getByRole("button", { name: /مهر/ }).click();
   const citationNumber = page.locator("bdi").first();

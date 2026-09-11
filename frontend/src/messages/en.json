@@ -1,4 +1,16 @@
 {
+  "auth": {
+    "title": "Sign in",
+    "subtitle": "We'll email you a secure link — no password to remember.",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "you@example.com",
+    "sendLink": "Send me a sign-in link",
+    "sending": "Sending...",
+    "checkEmail": "Check {email} for your sign-in link.",
+    "error": "Something went wrong. Please try again.",
+    "signOut": "Sign out",
+    "signIn": "Sign in"
+  },
   "common": {
     "firmPlaceholder": "[Firm Name]",
     "brandTagline": "A full lawyer in your hand",
@@ -58,9 +70,8 @@
     "najizCta": "Learn more about the Najiz process"
   },
   "review": {
-    "gateTitle": "Sign in to the internal review console",
-    "gateSubtitle": "This is an internal tool for our legal team. Pick a role to continue (a stand-in for real authentication).",
-    "roleLawyer": "Continue as reviewing lawyer",
+    "accessDeniedTitle": "Not authorized",
+    "accessDeniedBody": "This console is for the firm's lawyers only. Signed in as {email}.",
     "queueTitle": "Review queue",
     "colArea": "Practice area",
     "colSubmitted": "Submitted",
