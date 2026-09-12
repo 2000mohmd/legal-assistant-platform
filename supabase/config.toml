@@ -159,7 +159,13 @@ site_url = "http://127.0.0.1:3000"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+# Both dev-server ports are listed: 3000 for `npm run dev`, 3100 for
+# Playwright (see frontend/playwright.config.ts). Without an entry
+# matching whatever origin actually sent emailRedirectTo, Supabase quietly
+# drops/rejects the redirect and the magic-link flow breaks — not verified
+# live (no Docker here), but this is exactly the kind of port mismatch
+# that would otherwise silently break the Playwright auth helper.
+additional_redirect_urls = ["http://127.0.0.1:3000/**", "http://127.0.0.1:3100/**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -246,6 +252,25 @@ otp_expiry = 3600
 # [auth.email.template.invite]
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
+
+# Required for the app's magic-link flow (src/app/auth/confirm/route.ts):
+# the CLI's *default* magic-link template points at GoTrue's own
+# /auth/v1/verify endpoint, not this app's /auth/confirm route. Without
+# this override, signInWithOtp() would still send an email, but the link
+# in it would never reach /auth/confirm at all — the whole sign-in flow
+# would silently fail at the click-the-link step. Verified by reading the
+# CLI's default template behavior and Supabase's documented Next.js SSR
+# auth pattern; NOT verified by actually clicking a real email (no Docker
+# on this machine — see frontend/README.md).
+[auth.email.template.magic_link]
+subject = "Your sign-in link"
+# Path convention matches this file's own auto-generated commented-out
+# example above ("./supabase/templates/invite.html") — i.e. relative to
+# the project root, not to this supabase/ directory (that would double up
+# to supabase/supabase/...). Note db.seed's sql_paths above uses the
+# opposite convention (relative to supabase/) — inconsistent across
+# sections in the same CLI, not a mistake on this line.
+content_path = "./supabase/templates/magic_link.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]

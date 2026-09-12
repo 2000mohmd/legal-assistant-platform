@@ -35,6 +35,16 @@ reviewed-but-untested until someone runs the steps below for real.
    `supabase/seed.sql` with `profiles.role = 'lawyer'`) — same magic-link
    flow, same local inbox.
 
+Note: `supabase/config.toml` overrides the default magic-link email
+template (`[auth.email.template.magic_link]`) to point at this app's
+`/auth/confirm` route instead of Supabase's default verify endpoint, and
+`additional_redirect_urls` lists both dev-server ports (3000, 3100) —
+without either, the flow would send an email but the link in it would
+never reach the app. Found by reading the CLI's default config rather than
+by testing (still no Docker) — if step 4 above doesn't work, this pairing
+is the first place to check.
+   flow, same local inbox.
+
 ## Run it
 
 ```bash
