@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { fetchWithTimeout } from "./fetch-with-timeout";
 
 interface CookieToSet {
   name: string;
@@ -34,6 +35,7 @@ export async function updateSession(request: NextRequest) {
           }
         },
       },
+      global: { fetch: fetchWithTimeout() },
     }
   );
 

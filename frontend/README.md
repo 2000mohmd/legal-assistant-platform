@@ -49,9 +49,15 @@ Supabase calls now.
 ## Test it
 
 ```bash
+npm run test:unit   # Vitest — no Supabase needed, actually verified: 10/10 passing
 npx playwright install --with-deps chromium   # first time only
-npm run test:e2e
+npm run test:e2e    # needs local Supabase running — see caveat below
 ```
+
+`test:unit` covers logic that doesn't need a live Supabase connection
+(`src/lib/api/review-mapper.ts`'s DB-row-to-`ReviewItem` mapping,
+`src/lib/supabase/fetch-with-timeout.ts`) and is the one test command in
+this repo that's actually been run and confirmed green on this machine.
 
 **Also unverified**: the specs in `tests/e2e/` that touch `/marriage/*` or
 `/review` now sign in for real via `tests/e2e/helpers/auth.ts`, which
@@ -83,6 +89,14 @@ should work regardless.
   `auth.uid()`. **The AI/legal content inside those rows is still
   fixture-based** (`src/mocks/fixtures/{chat-answers,document-conditions}.ts`)
   — persistence is real, generation is not.
+- **Known non-issue once Supabase is actually running**: with Supabase
+  unreachable on this machine, `@supabase/supabase-js` itself takes ~7-8s
+  to report `ECONNREFUSED` (confirmed in a bare Node script, nothing to do
+  with this app's code) — internal client-library retry/backoff, not a
+  hanging fetch. `src/lib/supabase/fetch-with-timeout.ts` guards against a
+  genuinely hanging connection instead (e.g. a firewall black-holing
+  packets), which is a different failure mode. Once Supabase is reachable
+  there's nothing to retry, so this resolves itself.
 - **PDPL note**: this now stores real emails/sessions for anyone who signs
   up. The root `CLAUDE.md` non-negotiables require a PDPL assessment and
   data-residency decision before real (non-test) users are onboarded — that
