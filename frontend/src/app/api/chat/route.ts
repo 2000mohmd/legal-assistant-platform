@@ -11,6 +11,11 @@ import type { ChatMessage } from "@/types/chat";
 // switch for that gate at the frontend boundary, same pattern as
 // DOCUMENT_GENERATION_ENABLED in the backend.
 const MIZAN_BACKEND_URL = process.env.MIZAN_BACKEND_URL;
+// Required once MIZAN_BACKEND_URL is set — the backend fails closed
+// without a matching key (see src/mizan/api/security.py), since CORS
+// alone doesn't stop a direct server-to-server call once that service is
+// reachable at all.
+const MIZAN_BACKEND_API_KEY = process.env.MIZAN_BACKEND_API_KEY;
 
 type ResolvedAnswer = Omit<ChatMessage, "role">;
 
@@ -34,7 +39,10 @@ async function resolveViaRealBackend(message: string): Promise<ResolvedAnswer | 
   try {
     const res = await fetch(`${MIZAN_BACKEND_URL}/v1/chat`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(MIZAN_BACKEND_API_KEY ? { "x-internal-api-key": MIZAN_BACKEND_API_KEY } : {}),
+      },
       body: JSON.stringify({ practice_area: "marriage_family", question: message }),
       signal: AbortSignal.timeout(30_000),
     });

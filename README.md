@@ -89,11 +89,12 @@ not just five separate library functions:
 
 ```bash
 uv sync --extra dev
-uv run pytest         # 69 passed
+uv run pytest         # 74 passed
 uv run ruff check .   # clean
 uv run validate-gold-set data/practice_areas/marriage_family/gold_set/*.json
 uv run ingest-corpus marriage_family "Some Statute" statute path/to/raw.txt
-uv run uvicorn mizan.api.main:app --reload --port 8000
+MIZAN_INTERNAL_API_KEY=local-dev-only-not-a-real-secret \
+  uv run uvicorn mizan.api.main:app --reload --port 8000
 ```
 
 `ANTHROPIC_API_KEY` must be set in the environment before a `/v1/chat`
@@ -102,17 +103,28 @@ to run the test suite, start the server, or query a practice area with no
 corpus yet (that path is designed to never construct a model client at
 all, confirmed by a test that explicitly unsets the key).
 
+`MIZAN_INTERNAL_API_KEY` is required to start the server at all — every
+`/v1/chat` request must carry a matching `x-internal-api-key` header (see
+`api/security.py`) or it's rejected. This isn't optional even in local
+dev: CORS stops a browser on another origin from calling this API with a
+user's cookies, but does nothing against a direct server-to-server or
+curl call once this is reachable at all, which it will be the moment it's
+deployed anywhere off localhost. A real deployment needs a real generated
+secret here, not the placeholder value above.
+
 ## Wiring the frontend to this backend
 
 `frontend/src/app/api/chat/route.ts` calls this service instead of its
 fixture lookup when `MIZAN_BACKEND_URL` is set (e.g.
 `http://127.0.0.1:8000`) — unset by default, matching
 `DOCUMENT_GENERATION_ENABLED`'s pattern for the same reason: the gold-set
-review gate above, not a missing feature. Verified live end to end with
-this on: a matching-but-ungenerable question (real corpus hit, no API
-key) fell back to the fixture path cleanly; a genuinely unmatched question
-correctly got the real "not enough verified information" refusal instead
-of a fixture answer, rather than either case breaking the chat UI.
+review gate above, not a missing feature. `MIZAN_BACKEND_API_KEY` on the
+frontend must match `MIZAN_INTERNAL_API_KEY` on the backend. Verified live
+end to end with both set: a matching-but-ungenerable question (real
+corpus hit, no `ANTHROPIC_API_KEY`) fell back to the fixture path cleanly;
+a genuinely unmatched question correctly got the real "not enough
+verified information" refusal instead of a fixture answer, rather than
+either case breaking the chat UI.
 
 ## Layout
 

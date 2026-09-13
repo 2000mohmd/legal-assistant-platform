@@ -11,10 +11,11 @@ meant to be a public surface on its own.
 
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from mizan.api.routes.chat import router as chat_router
+from mizan.api.security import require_internal_api_key
 
 app = FastAPI(title="Mizan backend API", version="0.1.0")
 
@@ -30,7 +31,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(chat_router)
+# The shared-secret check, not CORS, is what actually stops a direct call
+# from outside the frontend — see security.py's docstring for why.
+app.include_router(chat_router, dependencies=[Depends(require_internal_api_key)])
 
 
 @app.get("/health")
