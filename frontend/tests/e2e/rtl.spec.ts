@@ -18,12 +18,11 @@ for (const screen of screens) {
   });
 }
 
-// NOTE: requires local Supabase running — untested in any environment so
-// far (see helpers/auth.ts).
+// Requires local Supabase running — verified live, passing.
 test("numeric citation identifiers stay LTR inside an Arabic-direction page", async ({
   page,
-}, testInfo) => {
-  await signInViaMagicLink(page, `rtl-test-${testInfo.testId}@example.com`, "ar");
+}) => {
+  await signInViaMagicLink(page, "rtl-test", "ar");
   await page.goto("/ar/marriage/chat");
   await page.getByRole("button", { name: /مهر/ }).click();
   const citationNumber = page.locator("bdi").first();

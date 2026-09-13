@@ -1,10 +1,17 @@
 import { test, expect } from "@playwright/test";
 import { signInViaMagicLink } from "./helpers/auth";
 
-// NOTE: requires local Supabase running with supabase/seed.sql applied
-// (which seeds lawyer@test.local with profiles.role = 'lawyer') —
-// untested in any environment so far (see helpers/auth.ts).
-test.describe("review console (signed in as the seeded test lawyer)", () => {
+// Requires local Supabase running with supabase/seed.sql applied (which
+// seeds lawyer@test.local with profiles.role = 'lawyer') — verified live,
+// passing. Both tests below share that one seeded account (it's the only
+// lawyer-role user seeded), so two real bugs showed up here specifically:
+// running them in parallel let one test's Mailpit search grab the other's
+// concurrently-arriving email (fixed with `.serial`, forcing one sign-in
+// to fully complete before the next starts), and even serially, two
+// emails to the same address moments apart could tie on Mailpit's
+// second-granularity timestamps (fixed in helpers/auth.ts by diffing
+// message IDs before/after sending, rather than sorting by timestamp).
+test.describe.serial("review console (signed in as the seeded test lawyer)", () => {
   test.beforeEach(async ({ page }) => {
     await signInViaMagicLink(page, "lawyer@test.local");
   });
@@ -37,8 +44,8 @@ test.describe("review console (signed in as the seeded test lawyer)", () => {
   });
 });
 
-test("review console denies a signed-in non-lawyer", async ({ page }, testInfo) => {
-  await signInViaMagicLink(page, `not-a-lawyer-${testInfo.testId}@example.com`);
+test("review console denies a signed-in non-lawyer", async ({ page }) => {
+  await signInViaMagicLink(page, "not-a-lawyer");
   await page.goto("/en/review");
   await expect(page.getByText(/not authorized/i)).toBeVisible();
 });

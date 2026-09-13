@@ -52,14 +52,25 @@ values
 -- Local-dev-only test lawyer account (magic-link auth has no password to
 -- seed) — lets you sign in as a lawyer at lawyer@test.local without going
 -- through the email flow. NEVER do this against a real/production project.
+--
+-- The token_* / encrypted_password columns MUST be empty strings, not
+-- NULL (the schema allows NULL, but GoTrue's Go code doesn't handle it) —
+-- hit this live: omitting them produced "Database error finding user" on
+-- every signInWithOtp() call for this account, which read as a broken
+-- magic-link flow until traced back to this specific row.
 insert into auth.users (
   id, instance_id, aud, role, email, email_confirmed_at,
-  raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change,
+  email_change_token_new, email_change_token_current,
+  phone_change, phone_change_token, reauthentication_token,
+  encrypted_password
 ) values (
   '00000000-0000-0000-0000-000000000001',
   '00000000-0000-0000-0000-000000000000',
   'authenticated', 'authenticated', 'lawyer@test.local', now(),
-  '{"provider":"email","providers":["email"]}', '{}', now(), now()
+  '{"provider":"email","providers":["email"]}', '{}', now(), now(),
+  '', '', '', '', '', '', '', '', ''
 );
 
 update public.profiles set role = 'lawyer', full_name = 'Test Reviewing Lawyer'

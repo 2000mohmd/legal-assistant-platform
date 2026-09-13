@@ -14,12 +14,12 @@ This repo has three pieces:
 - **This directory** (`src/mizan/`, `tests/`, `data/`) — the backend pipeline
   skeleton documented below.
 - **`frontend/`** — the Next.js app. See [`frontend/README.md`](frontend/README.md)
-  — read its "Current status" section first, since it now has real
-  Supabase auth/database wiring that is code-complete but not yet
-  runtime-verified (this machine has no Docker). This is separate from
-  `src/mizan/`: the frontend talks to Supabase directly for accounts/data,
-  not to anything in `src/mizan/` — the AI/legal content it shows is still
-  fixture data either way, pending real gold-set content.
+  — real Supabase auth/database wiring, verified live end to end
+  (14/14 Playwright, 10/10 Vitest, against an actually-running local
+  Supabase). This is separate from `src/mizan/`: the frontend talks to
+  Supabase directly for accounts/data, not to anything in `src/mizan/` —
+  the AI/legal content it shows is still fixture data either way, pending
+  real gold-set content.
 - **`supabase/`** — the database schema (migrations) and demo seed data
   backing the frontend's real accounts/persistence.
 

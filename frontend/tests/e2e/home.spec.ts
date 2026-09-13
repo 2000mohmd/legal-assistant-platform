@@ -26,5 +26,7 @@ test("marriage tile redirects a signed-out visitor to login", async ({ page }) =
   // signInViaMagicLink helper.
   await page.goto("/en");
   await page.getByRole("link", { name: /Marriage & Family Law/ }).click();
-  await expect(page).toHaveURL(/\/en\/login\?redirectTo=%2Fmarriage%2Fchat$/);
+  // The literal "/" in the query value is valid unencoded (Next's
+  // redirect() doesn't percent-encode it) — match either form.
+  await expect(page).toHaveURL(/\/en\/login\?redirectTo=(%2F|\/)marriage(%2F|\/)chat$/);
 });

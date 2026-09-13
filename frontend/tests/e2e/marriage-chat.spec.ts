@@ -1,14 +1,14 @@
 import { test, expect } from "@playwright/test";
 import { signInViaMagicLink } from "./helpers/auth";
 
-// NOTE: requires local Supabase running (`supabase start`) — untested in
-// any environment so far (see helpers/auth.ts). Each test signs in with a
-// fresh, unique email since local Supabase has no test-data reset between
+// Requires local Supabase running (`supabase start`) — verified live,
+// passing. Each test signs in with a fresh, unique email (see
+// helpers/auth.ts) since local Supabase has no test-data reset between
 // runs and repeat sign-ins to the same address would each need their own
 // magic link anyway.
 test.describe("marriage chat (signed in)", () => {
-  test.beforeEach(async ({ page }, testInfo) => {
-    await signInViaMagicLink(page, `chat-test-${testInfo.testId}@example.com`);
+  test.beforeEach(async ({ page }) => {
+    await signInViaMagicLink(page, "chat-test");
   });
 
   test("chat flow streams an answer with a verification badge and citation chip", async ({

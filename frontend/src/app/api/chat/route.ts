@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   );
   const answer = found?.message ?? defaultChatAnswer;
 
-  let { data: session } = await supabase
+  let { data: session, error: sessionSelectError } = await supabase
     .from("chat_sessions")
     .select("id")
     .eq("user_id", user.id)
@@ -32,19 +32,26 @@ export async function POST(req: Request) {
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (sessionSelectError) console.error("chat_sessions select error:", sessionSelectError);
 
   if (!session) {
-    const { data: newSession } = await supabase
+    const { data: newSession, error: sessionInsertError } = await supabase
       .from("chat_sessions")
       .insert({ user_id: user.id, practice_area: "marriage_family" })
       .select("id")
       .single();
+    if (sessionInsertError) console.error("chat_sessions insert error:", sessionInsertError);
     session = newSession;
   }
 
   if (session) {
-    await supabase.from("chat_messages").insert([
-      { session_id: session.id, role: "user", body: message },
+    const { error: messagesInsertError } = await supabase.from("chat_messages").insert([
+      // PostgREST bulk-insert sends an explicit NULL for any key missing
+      // from a given row object (rather than deferring to the column
+      // default) once the batch's rows have inconsistent keys — citations
+      // must be spelled out here too, not omitted, or this row alone
+      // violates chat_messages.citations' NOT NULL constraint.
+      { session_id: session.id, role: "user", body: message, citations: [] },
       {
         session_id: session.id,
         role: "assistant",
@@ -55,6 +62,7 @@ export async function POST(req: Request) {
         council_note: answer.councilNote ?? null,
       },
     ]);
+    if (messagesInsertError) console.error("chat_messages insert error:", messagesInsertError);
   }
 
   const encoder = new TextEncoder();

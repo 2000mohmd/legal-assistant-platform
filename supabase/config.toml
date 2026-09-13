@@ -162,10 +162,13 @@ site_url = "http://127.0.0.1:3000"
 # Both dev-server ports are listed: 3000 for `npm run dev`, 3100 for
 # Playwright (see frontend/playwright.config.ts). Without an entry
 # matching whatever origin actually sent emailRedirectTo, Supabase quietly
-# drops/rejects the redirect and the magic-link flow breaks — not verified
-# live (no Docker here), but this is exactly the kind of port mismatch
-# that would otherwise silently break the Playwright auth helper.
-additional_redirect_urls = ["http://127.0.0.1:3000/**", "http://127.0.0.1:3100/**"]
+# drops/rejects the redirect and falls back to site_url instead — hit this
+# live: an early test without the exact /auth/confirm entries produced
+# magic-link emails linking to bare "http://127.0.0.1:3000" with no path,
+# so /auth/confirm never received token_hash/type/next at all. Confirmed
+# working end to end (real email -> real link -> real session) once both
+# the exact paths and the wildcards below were present together.
+additional_redirect_urls = ["http://127.0.0.1:3000/auth/confirm", "http://127.0.0.1:3100/auth/confirm", "http://127.0.0.1:3000/**", "http://127.0.0.1:3100/**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -201,7 +204,14 @@ password_requirements = ""
 
 [auth.rate_limit]
 # Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
-email_sent = 2
+# Raised from the CLI default of 2 — this project's whole auth flow is
+# magic-link-only, and this limit is global (project-wide), not
+# per-recipient, so it starves out real usage fast: a couple of manual
+# test sign-ins plus a Playwright run (which signs in several times, once
+# per test) blows through 2/hour almost immediately. This is the local
+# dev config only — a real deployed project's rate limits live in its own
+# Supabase dashboard, unaffected by this file.
+email_sent = 100
 # Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
 sms_sent = 30
 # Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.

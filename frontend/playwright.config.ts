@@ -3,6 +3,12 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
+  // Most specs now hit a real local Supabase stack (Postgres + GoTrue +
+  // Mailpit in Docker) instead of mocks. Observed live: 4 workers hitting
+  // it simultaneously produced a real timeout (page never finished loading
+  // in time) that didn't reproduce at lower concurrency — capping workers
+  // trades a bit of wall-clock time for reliability against the real stack.
+  workers: 2,
   retries: 0,
   reporter: [["list"]],
   use: {
