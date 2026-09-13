@@ -117,9 +117,16 @@ approved/rejected) — run `supabase db reset` from the repo root first if
   blocked on lawyer-only tables, and reads/writes are correctly scoped to
   `auth.uid()` elsewhere. The home dashboard and review console read real
   rows; chat and document intake persist real rows tied to the signed-in
-  user. **The AI/legal content inside those rows is still fixture-based**
-  (`src/mocks/fixtures/{chat-answers,document-conditions}.ts`) —
-  persistence is real, generation is not.
+  user. **The AI/legal content inside those rows is fixture-based by
+  default** (`src/mocks/fixtures/{chat-answers,document-conditions}.ts`).
+- **Real backend integration (opt-in)**: `MIZAN_BACKEND_URL` in `.env.local`
+  switches `/api/chat` to call the Python backend's real retrieval +
+  Claude + citation-verification pipeline (`../src/mizan/api/`) instead
+  of fixtures. Verified live: a matching-but-ungenerable question (real
+  corpus hit, no `ANTHROPIC_API_KEY` configured) fell back to fixtures
+  cleanly; a genuinely unmatched question got the pipeline's real "not
+  enough verified information" refusal instead. Unset by default — same
+  gold-set-review gate as document generation, not a missing feature.
 - **PDPL note**: this now stores real emails/sessions for anyone who signs
   up. The root `CLAUDE.md` non-negotiables require a PDPL assessment and
   data-residency decision before real (non-test) users are onboarded — that
@@ -141,9 +148,11 @@ approved/rejected) — run `supabase db reset` from the repo root first if
   (`src/app/api/documents/intake/route.ts`) — `template_approved` is only
   reachable through an explicitly-labeled demo toggle, never the default.
   Reflects the still-open regulatory blocking item in the root `CLAUDE.md`.
-- Chat answers are keyword-matched fixtures (`src/app/api/chat/route.ts`),
-  not real retrieval or a real Claude call — `generation/claude_client.py`
-  in the backend exists but nothing invokes it from here yet.
+- Chat answers are keyword-matched fixtures by default
+  (`src/app/api/chat/route.ts`). Setting `MIZAN_BACKEND_URL` switches to
+  real retrieval + a real Claude call against the backend's answer
+  pipeline instead — see the root `../README.md`. Left unset by default:
+  the gold-set review gate, not a missing feature.
 
 ## Structure
 

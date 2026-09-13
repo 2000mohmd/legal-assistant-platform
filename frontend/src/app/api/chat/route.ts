@@ -1,11 +1,81 @@
 import { chatAnswers, defaultChatAnswer } from "@/mocks/fixtures/chat-answers";
 import { createClient } from "@/lib/supabase/server";
+import type { ChatMessage } from "@/types/chat";
+
+// Set to call the real Python backend (src/mizan/api) instead of the
+// fixture lookup below — see ../../../../README.md's ingestion section for
+// how a real corpus gets there. Left unset by default on purpose: even
+// once a real corpus exists, root CLAUDE.md's "How to work in this repo"
+// gate says no retrieval/generation code runs for a practice area until
+// that area's gold set is reviewed — this flag is the literal on/off
+// switch for that gate at the frontend boundary, same pattern as
+// DOCUMENT_GENERATION_ENABLED in the backend.
+const MIZAN_BACKEND_URL = process.env.MIZAN_BACKEND_URL;
+
+type ResolvedAnswer = Omit<ChatMessage, "role">;
+
+interface RealBackendCitation {
+  source_document: string;
+  article_or_madda: string;
+  quoted_text: string | null;
+  result: "passed" | "flagged";
+  note: string;
+}
+
+interface RealBackendResponse {
+  text: string;
+  citations: RealBackendCitation[];
+  verification: "verified" | "flagged";
+  grounded: boolean;
+  council_note: string | null;
+}
+
+async function resolveViaRealBackend(message: string): Promise<ResolvedAnswer | null> {
+  try {
+    const res = await fetch(`${MIZAN_BACKEND_URL}/v1/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ practice_area: "marriage_family", question: message }),
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!res.ok) return null;
+
+    const data = (await res.json()) as RealBackendResponse;
+    return {
+      id: `real-${Date.now()}`,
+      text: data.text,
+      citations: data.citations.map((c) => ({
+        source_document: c.source_document,
+        article_or_madda: c.article_or_madda,
+        quoted_text: c.quoted_text,
+        is_illustrative: false,
+      })),
+      verification: data.verification,
+      difficulty: "routine",
+      councilNote: data.council_note ?? undefined,
+    };
+  } catch (err) {
+    // Real backend down/unreachable — fall back to the fixture path below
+    // rather than a broken chat experience. Logged, not swallowed silently.
+    console.error("Real backend call failed, falling back to fixtures:", err);
+    return null;
+  }
+}
+
+function resolveViaFixtures(message: string): ResolvedAnswer {
+  const normalized = message.toLowerCase();
+  const found = chatAnswers.find((entry) =>
+    entry.matchKeywords.some((keyword) => normalized.includes(keyword.toLowerCase()))
+  );
+  const { role: _role, ...answer } = found?.message ?? defaultChatAnswer;
+  return answer;
+}
 
 // Streams the answer text word-by-word (mock UX preview), then appends a
 // metadata sentinel with citations/verification/council-mode info. The
-// answer *content* is still fixture-based — no real retrieval/generation
-// yet — but the exchange is now persisted for real against the signed-in
-// user (chat_sessions/chat_messages, RLS-scoped to auth.uid()).
+// exchange is persisted for real against the signed-in user
+// (chat_sessions/chat_messages, RLS-scoped to auth.uid()) regardless of
+// which path produced the answer.
 export async function POST(req: Request) {
   const supabase = await createClient();
   const {
@@ -17,12 +87,9 @@ export async function POST(req: Request) {
   }
 
   const { message } = (await req.json()) as { message: string };
-  const normalized = message.toLowerCase();
 
-  const found = chatAnswers.find((entry) =>
-    entry.matchKeywords.some((keyword) => normalized.includes(keyword.toLowerCase()))
-  );
-  const answer = found?.message ?? defaultChatAnswer;
+  const answer =
+    (MIZAN_BACKEND_URL ? await resolveViaRealBackend(message) : null) ?? resolveViaFixtures(message);
 
   let { data: session, error: sessionSelectError } = await supabase
     .from("chat_sessions")

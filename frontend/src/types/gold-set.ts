@@ -10,8 +10,17 @@ export interface Citation {
   source_document: string;
   article_or_madda: string;
   quoted_text: string | null;
-  /** Demo-only flag: every fixture citation is fabricated, never real statutory text. */
-  is_illustrative: true;
+  /**
+   * True for every fixture in src/mocks — fabricated, never real statutory
+   * text. Was a `true` literal type (impossible to construct a
+   * non-illustrative Citation at all) back when nothing but fixtures could
+   * produce one; now `boolean` so a real backend response (see
+   * MIZAN_BACKEND_URL in api/chat/route.ts) can set it false. The UI still
+   * shows a blanket "Demo data" watermark regardless of this flag — that
+   * hasn't been revisited yet because no real backend call has happened
+   * outside this machine.
+   */
+  is_illustrative: boolean;
 }
 
 export interface GoldSetEntry {
