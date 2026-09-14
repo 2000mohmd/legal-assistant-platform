@@ -22,6 +22,13 @@ export async function POST(req: Request) {
 
   const intake = (await req.json()) as IntakeRequest;
 
+  // Validate before hitting the database: both columns are NOT NULL, so a
+  // blank submission came back as an opaque 500 rather than as something
+  // the form could tell the user about.
+  if (!intake?.situation?.trim() || !intake?.desiredConditions?.trim()) {
+    return NextResponse.json({ error: "missing_required_fields" }, { status: 400 });
+  }
+
   const { data: row, error } = await supabase
     .from("document_requests")
     .insert({
@@ -37,7 +44,11 @@ export async function POST(req: Request) {
     .single();
 
   if (error || !row) {
-    return NextResponse.json({ error: error?.message ?? "insert_failed" }, { status: 500 });
+    // Log the real reason, return a generic one. A Postgres error message
+    // can name columns, constraints and values — including the user's own
+    // submitted text — and this response crosses to the browser.
+    console.error("document_requests insert failed:", error);
+    return NextResponse.json({ error: "insert_failed" }, { status: 500 });
   }
 
   const draft: DraftedDocument = {

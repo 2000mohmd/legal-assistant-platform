@@ -46,6 +46,19 @@ export default function MarriageDocumentsPage() {
 
       <div className="rounded-card border border-line bg-white p-5">
         <IntakeForm onSubmit={(data) => mutation.mutate(data)} submitting={mutation.isPending} />
+
+        {/* A failed submit used to do nothing at all on screen: the user
+            pressed "Draft the conditions" and could not tell whether their
+            request had reached the firm. For a legal intake form, silence
+            is the one unacceptable answer. */}
+        {mutation.isError && (
+          <p
+            role="status"
+            className="mt-4 rounded-card border border-accent/40 bg-accent-tint px-4 py-3 text-sm text-body"
+          >
+            {t("submitFailed")}
+          </p>
+        )}
       </div>
 
       {mutation.data && (
@@ -60,8 +73,17 @@ export default function MarriageDocumentsPage() {
 
       <div>
         <h2 className="mb-3 font-serif text-xl text-ink">{t("myRequestsTitle")}</h2>
+        {/* isError is handled separately from the empty list on purpose.
+            Falling back to `?? []` on a failed fetch rendered "You haven't
+            submitted any requests yet" — telling a user their pending
+            request doesn't exist, which is the worst possible way for this
+            particular list to fail. */}
         {requests.isLoading ? (
           <div className="h-24 animate-pulse rounded-card border border-line bg-white" />
+        ) : requests.isError ? (
+          <p className="rounded-card border border-accent/40 bg-accent-tint px-4 py-3 text-sm text-body">
+            {t("requestsUnavailable")}
+          </p>
         ) : (
           <MyRequests requests={requests.data?.requests ?? []} />
         )}

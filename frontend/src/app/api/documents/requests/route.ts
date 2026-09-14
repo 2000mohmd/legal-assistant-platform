@@ -2,6 +2,15 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { DocumentRequestSummary } from "@/types/documents";
 
+// See the note in api/review/queue/route.ts: Next.js caches GET fetches
+// by default and supabase-js reads through that same global fetch, so
+// without this the route serves a stale snapshot. Every route that
+// returns per-user, RLS-scoped data needs it — a user seeing a cached
+// version of their own case status is a correctness bug here, not a
+// performance trade-off.
+export const dynamic = "force-dynamic";
+
+
 // A client's own submitted requests and what happened to them. Without
 // this the intake form was a dead end: submit, see one draft, and never
 // be able to look at it again. RLS ("document_requests: owner read")

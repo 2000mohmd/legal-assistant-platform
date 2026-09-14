@@ -2,6 +2,15 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { mapReviewItemRow } from "@/lib/api/review-mapper";
 
+// See the note in api/review/queue/route.ts: Next.js caches GET fetches
+// by default and supabase-js reads through that same global fetch, so
+// without this the route serves a stale snapshot. Every route that
+// returns per-user, RLS-scoped data needs it — a user seeing a cached
+// version of their own case status is a correctness bug here, not a
+// performance trade-off.
+export const dynamic = "force-dynamic";
+
+
 export async function GET(_req: Request, { params }: { params: { itemId: string } }) {
   const supabase = await createClient();
 

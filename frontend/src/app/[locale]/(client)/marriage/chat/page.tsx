@@ -15,6 +15,12 @@ export default function MarriageChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [streamingId, setStreamingId] = useState<string | null>(null);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // Whether the answers on screen are fixture content. Driven by the
+  // server's meta rather than hardcoded, so the "demo data" watermark
+  // disappears on its own once real answers are being served — a
+  // hardcoded one would go from reassuring to actively misleading.
+  const [isDemo, setIsDemo] = useState(true);
   const idRef = useRef(0);
 
   // The conversation was already being persisted; it just was never read
@@ -38,9 +44,22 @@ export default function MarriageChatPage() {
     };
   }, []);
 
+  /**
+   * Every failure path here removes the empty assistant bubble and shows a
+   * plain-language reason instead. Previously a non-OK response either
+   * left a permanently blank bubble or — for a 401, whose body is the
+   * literal text "Unauthorized" — streamed that word into the chat as if
+   * the assistant had said it.
+   */
+  function failWith(assistantId: string, reason: string) {
+    setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+    setError(reason);
+  }
+
   async function sendMessage(text: string) {
     const userId = `u-${idRef.current++}`;
     const assistantId = `a-${idRef.current++}`;
+    setError(null);
     setMessages((prev) => [
       ...prev,
       { id: userId, role: "user", text },
@@ -48,34 +67,54 @@ export default function MarriageChatPage() {
     ]);
     setStreamingId(assistantId);
 
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text }),
-    });
-    if (!res.body) {
-      setStreamingId(null);
-      return;
-    }
+    // finally, not a trailing call: an exception anywhere below used to
+    // leave streamingId set forever, which disables the input — a thrown
+    // JSON.parse on a truncated stream locked the user out of their own
+    // conversation with no way back except a reload.
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      });
 
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
+      if (!res.ok || !res.body) {
+        failWith(
+          assistantId,
+          res.status === 401 ? t("errorSignedOut") : t("errorUnavailable")
+        );
+        return;
+      }
 
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const metaIndex = buffer.indexOf(META_SENTINEL);
+        const visibleText = metaIndex === -1 ? buffer : buffer.slice(0, metaIndex);
+        setMessages((prev) =>
+          prev.map((m) => (m.id === assistantId ? { ...m, text: visibleText } : m))
+        );
+      }
 
       const metaIndex = buffer.indexOf(META_SENTINEL);
-      const visibleText = metaIndex === -1 ? buffer : buffer.slice(0, metaIndex);
-      setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, text: visibleText } : m)));
-    }
+      if (metaIndex === -1) {
+        // The stream ended without its metadata sentinel, so the answer is
+        // truncated and its citations never arrived. Showing partial legal
+        // guidance stripped of the sources it depends on is worse than
+        // showing nothing.
+        failWith(assistantId, t("errorUnavailable"));
+        return;
+      }
 
-    const metaIndex = buffer.indexOf(META_SENTINEL);
-    if (metaIndex !== -1) {
       const meta = JSON.parse(buffer.slice(metaIndex + META_SENTINEL.length));
+      setIsDemo(Boolean(meta.demo));
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId
@@ -90,8 +129,11 @@ export default function MarriageChatPage() {
             : m
         )
       );
+    } catch {
+      failWith(assistantId, t("errorUnavailable"));
+    } finally {
+      setStreamingId(null);
     }
-    setStreamingId(null);
   }
 
   return (
@@ -122,15 +164,28 @@ export default function MarriageChatPage() {
         {messages.map((m) => (
           <ChatMessageBubble key={m.id} message={m} streaming={m.id === streamingId} />
         ))}
+
+        {/* Gold, not red — the project's convention throughout: a caution
+            state in a legal product shouldn't read as alarm. */}
+        {error && (
+          <p
+            role="status"
+            className="rounded-card border border-accent/40 bg-accent-tint px-4 py-3 text-sm text-body"
+          >
+            {error}
+          </p>
+        )}
       </div>
 
       <div className="mt-4">
         <ChatInput onSend={sendMessage} disabled={Boolean(streamingId)} />
       </div>
 
-      <p className="mt-4">
-        <span className="demo-watermark">{common("demoWatermark")}</span>
-      </p>
+      {isDemo && (
+        <p className="mt-4">
+          <span className="demo-watermark">{common("demoWatermark")}</span>
+        </p>
+      )}
     </div>
   );
 }

@@ -51,6 +51,8 @@
     "expandSource": "View retrieved source text",
     "highStakesTitle": "High-stakes question",
     "highStakesBody": "This question was cross-checked against multiple AI models (council mode) to surface any disagreement rather than silently picking one answer.",
+    "errorUnavailable": "We couldn't produce a verified answer just now, so we haven't shown one. Nothing was sent to your lawyer. Please try again in a moment.",
+    "errorSignedOut": "Your session has expired. Please sign in again to continue.",
     "sampleQuestions": [
       "Can part of the dowry be deferred?",
       "Who has custody rights after divorce?"
@@ -75,6 +77,8 @@
     "demoToggleNote": "This toggle is for demonstration only, to show both possible states — the actual default is \"pending review.\"",
     "myRequestsTitle": "Your requests",
     "noRequestsYet": "You haven't submitted any requests yet.",
+    "submitFailed": "We couldn't submit this to the firm just now, so it hasn't been sent. Your text is still here — please try again in a moment.",
+    "requestsUnavailable": "We couldn't load your requests just now. This doesn't affect anything you've already submitted — please refresh to try again.",
     "statusPending": "With your lawyer",
     "statusApproved": "Reviewed & approved",
     "statusRejected": "Not approved",
