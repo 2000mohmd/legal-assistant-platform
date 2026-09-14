@@ -1,39 +1,38 @@
-import { test, expect, type Page } from "@playwright/test";
-import { signInViaMagicLink } from "./helpers/auth";
+import { test, expect, type Browser, type Page } from "@playwright/test";
+import { signInAsLawyer, signInViaMagicLink } from "./helpers/auth";
+import { submitDocumentRequest } from "./helpers/requests";
+import { expectNoSidewaysScroll, PHONE_VIEWPORT } from "./helpers/layout";
 
-// Requires local Supabase running with supabase/seed.sql applied (which
-// seeds lawyer@test.local with profiles.role = 'lawyer') — verified live,
-// passing. Both tests below share that one seeded account (it's the only
-// lawyer-role user seeded), so two real bugs showed up here specifically:
-// running them in parallel let one test's Mailpit search grab the other's
-// concurrently-arriving email (fixed with `.serial`, forcing one sign-in
-// to fully complete before the next starts), and even serially, two
-// emails to the same address moments apart could tie on Mailpit's
-// second-granularity timestamps (fixed in helpers/auth.ts by diffing
-// message IDs before/after sending, rather than sorting by timestamp).
-test.describe.serial("review console (signed in as the seeded test lawyer)", () => {
-  test.beforeEach(async ({ page }) => {
-    await signInViaMagicLink(page, "lawyer@test.local");
-  });
+// Requires local Supabase running with supabase/seed.sql applied.
+//
+// These tests used to run `.serial` and share lawyer@test.local, because
+// two things genuinely raced: concurrent sign-ins to one mailbox could
+// consume each other's single-use magic link, and both tests picked "the
+// first Pending row" out of a queue every other spec was also mutating.
+// Serializing one file papered over both without fixing either — nothing
+// stopped a spec in another worker from doing the same thing.
+//
+// Both are now fixed at the source: signInAsLawyer() mints a private
+// lawyer account per call (see seed.sql's dev-only promotion rule), and
+// each test submits and then claims its OWN queue row. So these can run
+// fully parallel.
+test.describe("review console", () => {
+  /** Opens the queue row for a request this test created, not a shared one. */
+  async function openOwnItem(page: Page, browser: Browser, label: string) {
+    const marker = await submitDocumentRequest(browser, label);
 
-  // Both tests open a row that is actually still Pending rather than one
-  // at a fixed position. Positional selectors (.first()/.nth(1)) broke as
-  // soon as another spec added a row to the same database: the queue is
-  // shared, mutable state, and a decided item shows no action buttons at
-  // all, so "the second link" silently became "an item nothing can be
-  // done to."
-  async function openPendingItem(page: Page) {
+    await signInAsLawyer(page);
     await page.goto("/en/review");
     await expect(page.getByRole("heading", { name: "Review queue" })).toBeVisible();
 
-    const pendingRow = page.getByRole("row").filter({ hasText: "Pending" }).first();
-    await expect(pendingRow).toBeVisible({ timeout: 10_000 });
-    await pendingRow.getByRole("link").click();
+    const row = page.getByRole("link").filter({ hasText: marker });
+    await expect(row).toBeVisible({ timeout: 10_000 });
+    await row.click();
     await expect(page.getByRole("heading", { name: "Item detail" })).toBeVisible();
   }
 
-  test("review console: queue, approve, and audit trail", async ({ page }) => {
-    await openPendingItem(page);
+  test("queue, approve, and audit trail", async ({ page, browser }) => {
+    await openOwnItem(page, browser, "APPROVE");
 
     await page.getByRole("button", { name: "Approve", exact: true }).click();
 
@@ -41,8 +40,8 @@ test.describe.serial("review console (signed in as the seeded test lawyer)", () 
     await expect(page.getByText("Audit trail")).toBeVisible();
   });
 
-  test("review console: edit then approve shows a diff", async ({ page }) => {
-    await openPendingItem(page);
+  test("edit then approve shows a diff", async ({ page, browser }) => {
+    await openOwnItem(page, browser, "EDIT");
 
     await page.getByRole("button", { name: "Edit then approve" }).click();
     const textarea = page.getByRole("textbox");
@@ -51,6 +50,20 @@ test.describe.serial("review console (signed in as the seeded test lawyer)", () 
 
     await expect(page.getByText("Approved (edited)").first()).toBeVisible();
     await expect(page.getByText("Diff: AI draft vs. edited final")).toBeVisible();
+  });
+
+  // The queue's table IS wider than a phone on purpose — four columns
+  // don't usefully compress — so what's asserted is that it stays inside
+  // its own scroll container and the page doesn't move sideways with it.
+  test("fits a phone screen", async ({ page, browser }) => {
+    await page.setViewportSize(PHONE_VIEWPORT);
+    await openOwnItem(page, browser, "MOBILE");
+
+    await expectNoSidewaysScroll(page);
+
+    await page.goto("/en/review");
+    await expect(page.getByRole("heading", { name: "Review queue" })).toBeVisible();
+    await expectNoSidewaysScroll(page);
   });
 });
 

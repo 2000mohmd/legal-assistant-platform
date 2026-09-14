@@ -12,12 +12,31 @@ const MAILPIT_URL = "http://127.0.0.1:54324";
  * verifying an old, already-consumed token — which silently lands back on
  * /login, exactly what was observed.
  *
- * lawyer@test.local (the one seeded lawyer account) still has to be a
- * fixed, shared address, so this can't be the only safeguard — see
- * waitForMagicLink's before/after ID-diffing for the rest of the fix.
+ * The before/after ID-diffing in waitForNewMagicLink stays as a second
+ * safeguard: a caller can still pass a fixed address explicitly (the
+ * seeded lawyer@test.local exists for manual dev sign-in), and timestamp
+ * sorting alone was not reliable for those.
  */
-function uniqueTestEmail(prefix: string): string {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
+function uniqueTestEmail(prefix: string, domain = "example.com"): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@${domain}`;
+}
+
+/**
+ * Signs in as a throwaway lawyer-role account.
+ *
+ * Every lawyer test used to share lawyer@test.local, the single seeded
+ * lawyer. That is a shared mailbox, and specs in parallel workers signing
+ * into it moments apart can consume each other's single-use magic link —
+ * the loser silently lands back on /login. `.serial` contains that within
+ * one file and does nothing across files.
+ *
+ * supabase/seed.sql grants the lawyer role to any signup at
+ * @lawyer.test.local (local dev only, and deliberately not in a
+ * migration), so each call here gets a genuinely private inbox and the
+ * contention disappears rather than being scheduled around.
+ */
+export async function signInAsLawyer(page: Page, locale: "ar" | "en" = "en") {
+  await signInViaMagicLink(page, uniqueTestEmail("lawyer", "lawyer.test.local"), locale);
 }
 
 /**

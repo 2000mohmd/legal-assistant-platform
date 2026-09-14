@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { signInViaMagicLink } from "./helpers/auth";
+import { signInAsLawyer, signInViaMagicLink } from "./helpers/auth";
 
 // The single most important flow in the product: a client submits a
 // document request, a lawyer actually receives it, decides on it, and the
@@ -31,7 +31,7 @@ test("client submission reaches the lawyer's queue and the decision returns to t
   // A lawyer, in a separate session, must actually receive it.
   const lawyerContext = await browser.newContext();
   const lawyerPage = await lawyerContext.newPage();
-  await signInViaMagicLink(lawyerPage, "lawyer@test.local");
+  await signInAsLawyer(lawyerPage);
   await lawyerPage.goto("/en/review");
 
   const queueRow = lawyerPage.getByRole("link").filter({ hasText: marker });

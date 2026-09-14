@@ -10,21 +10,24 @@ values
    'استشارات وإعداد مستندات لعقود الزواج والأحوال الشخصية.',
    'Guidance and document assistance for marriage contracts and family matters.',
    'live', '/marriage/chat', 1),
+  -- Descriptions say what each service IS. Availability is already stated
+  -- by the tile's badge and its "not yet live" note, so repeating
+  -- "coming soon" here said the same thing three times on one card.
   ('commercial-corporate', 'الشركات والأعمال التجارية', 'Commercial & Corporate',
-   'قريباً — قيد التحقق من دقة الإجابات مع المحامين.',
-   'Coming soon — accuracy review with our lawyers is still underway.',
+   'تأسيس الشركات، العقود التجارية، ومسائل الشركاء.',
+   'Company formation, commercial contracts, and shareholder matters.',
    'coming_soon', null, 2),
   ('real-estate', 'العقارات', 'Real Estate',
-   'قريباً — قيد التحقق من دقة الإجابات مع المحامين.',
-   'Coming soon — accuracy review with our lawyers is still underway.',
+   'عقود البيع والإيجار، الملكية، ونزاعات العقار.',
+   'Sale and lease agreements, ownership, and property disputes.',
    'coming_soon', null, 3),
   ('labor-employment', 'العمل والعمال', 'Labor & Employment',
-   'قريباً — قيد التحقق من دقة الإجابات مع المحامين.',
-   'Coming soon — accuracy review with our lawyers is still underway.',
+   'عقود العمل، إنهاء الخدمة، وحقوق نهاية الخدمة.',
+   'Employment contracts, termination, and end-of-service entitlements.',
    'coming_soon', null, 4),
   ('inheritance', 'المواريث', 'Inheritance',
-   'قريباً — قيد التحقق من دقة الإجابات مع المحامين.',
-   'Coming soon — accuracy review with our lawyers is still underway.',
+   'حصر الإرث، قسمة التركة، والوصايا.',
+   'Estate inventory, division of an estate, and wills.',
    'coming_soon', null, 5);
 
 insert into public.review_items
@@ -75,3 +78,39 @@ insert into auth.users (
 
 update public.profiles set role = 'lawyer', full_name = 'Test Reviewing Lawyer'
 where email = 'lawyer@test.local';
+
+-- LOCAL DEV / TEST ONLY. Auto-promotes any signup at @lawyer.test.local to
+-- the lawyer role, so an automated test can mint its own throwaway lawyer
+-- instead of every lawyer test sharing the one fixed account above.
+--
+-- That sharing was a real, already-observed source of flakiness, not a
+-- hypothetical: several specs signing into the same address moments apart
+-- each poll the same Mailpit inbox, and one can consume the other's
+-- single-use magic link — whichever test loses silently lands back on
+-- /login. `.serial` fixed it inside one file; it cannot fix it across
+-- files running in parallel workers. Unique addresses fix it everywhere.
+--
+-- This lives in seed.sql, never in a migration, precisely because it must
+-- not exist anywhere real: it makes role assignment depend on an email
+-- domain, which is self-service privilege escalation for anyone who can
+-- receive mail at that domain. Promotion in production stays a manual,
+-- deliberate act (see handle_new_user in 0001_init.sql).
+create function public.dev_only_promote_test_lawyers()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.email like '%@lawyer.test.local' then
+    new.role := 'lawyer';
+  end if;
+  return new;
+end;
+$$;
+
+-- BEFORE INSERT on profiles, not on auth.users: handle_new_user() is what
+-- creates the profile row, so hooking auth.users would depend on trigger
+-- firing order between two triggers on the same table. This one runs on
+-- the row being written, which is unambiguous.
+create trigger dev_only_promote_test_lawyers
+  before insert on public.profiles
+  for each row execute procedure public.dev_only_promote_test_lawyers();
