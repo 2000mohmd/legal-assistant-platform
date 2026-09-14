@@ -18,7 +18,7 @@ export function ReviewQueueTable({ items }: { items: ReviewItem[] }) {
     <Table>
       <Thead>
         <Tr>
-          <Th>{t("colArea")}</Th>
+          <Th>{t("colRequest")}</Th>
           <Th>{t("colSubmitted")}</Th>
           <Th>{t("colStakes")}</Th>
           <Th>{t("colStatus")}</Th>
@@ -28,10 +28,18 @@ export function ReviewQueueTable({ items }: { items: ReviewItem[] }) {
         {items.map((item) => (
           <Tr key={item.id}>
             <Td>
-              <Link href={`/review/${item.id}`} className="font-medium text-primary hover:underline">
-                {item.practiceArea}
+              {/* The question is the link, not the practice area: every row
+                  in this queue currently shares the same practice area, so
+                  linking that gave a lawyer a column of identical labels
+                  and forced them to read the smaller line underneath to
+                  tell two items apart. */}
+              <Link
+                href={`/review/${item.id}`}
+                className="line-clamp-2 font-medium text-primary hover:underline"
+              >
+                {item.question}
               </Link>
-              <p className="mt-0.5 line-clamp-1 text-xs text-muted">{item.question}</p>
+              <p className="mt-0.5 text-xs text-muted">{item.practiceArea}</p>
             </Td>
             <Td className="whitespace-nowrap text-muted">
               <bdi dir="ltr">{new Date(item.submittedAt).toLocaleString()}</bdi>

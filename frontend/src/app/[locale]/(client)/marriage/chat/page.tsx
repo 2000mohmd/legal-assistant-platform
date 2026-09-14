@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ChatMessageBubble } from "@/components/chat/chat-message";
 import { ChatInput } from "@/components/chat/chat-input";
@@ -14,7 +14,29 @@ export default function MarriageChatPage() {
   const sampleQuestions = t.raw("sampleQuestions") as string[];
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [streamingId, setStreamingId] = useState<string | null>(null);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const idRef = useRef(0);
+
+  // The conversation was already being persisted; it just was never read
+  // back, so a refresh looked like it had been thrown away.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/chat/history")
+      .then((res) => (res.ok ? res.json() : { messages: [] }))
+      .then((data: { messages: ChatMessage[] }) => {
+        if (!cancelled && data.messages.length > 0) setMessages(data.messages);
+      })
+      .catch(() => {
+        // History is an enhancement, not a prerequisite for chatting —
+        // a failure here must not block the input.
+      })
+      .finally(() => {
+        if (!cancelled) setHistoryLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function sendMessage(text: string) {
     const userId = `u-${idRef.current++}`;
@@ -80,7 +102,9 @@ export default function MarriageChatPage() {
       </div>
 
       <div className="min-h-[20rem] space-y-5 rounded-card border border-line bg-primary-tint/20 p-5">
-        {messages.length === 0 && (
+        {/* Held back until history resolves, so a returning user doesn't
+            see starter prompts flash before their own conversation. */}
+        {historyLoaded && messages.length === 0 && (
           <div className="flex flex-wrap gap-2">
             {sampleQuestions.map((q) => (
               <button

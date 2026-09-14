@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { signInViaMagicLink } from "./helpers/auth";
 
 // Requires local Supabase running with supabase/seed.sql applied (which
@@ -16,14 +16,25 @@ test.describe.serial("review console (signed in as the seeded test lawyer)", () 
     await signInViaMagicLink(page, "lawyer@test.local");
   });
 
-  test("review console: queue, approve, and audit trail", async ({ page }) => {
+  // Both tests open a row that is actually still Pending rather than one
+  // at a fixed position. Positional selectors (.first()/.nth(1)) broke as
+  // soon as another spec added a row to the same database: the queue is
+  // shared, mutable state, and a decided item shows no action buttons at
+  // all, so "the second link" silently became "an item nothing can be
+  // done to."
+  async function openPendingItem(page: Page) {
     await page.goto("/en/review");
-
     await expect(page.getByRole("heading", { name: "Review queue" })).toBeVisible();
-    const firstRow = page.getByRole("link").first();
-    await firstRow.click();
 
+    const pendingRow = page.getByRole("row").filter({ hasText: "Pending" }).first();
+    await expect(pendingRow).toBeVisible({ timeout: 10_000 });
+    await pendingRow.getByRole("link").click();
     await expect(page.getByRole("heading", { name: "Item detail" })).toBeVisible();
+  }
+
+  test("review console: queue, approve, and audit trail", async ({ page }) => {
+    await openPendingItem(page);
+
     await page.getByRole("button", { name: "Approve", exact: true }).click();
 
     await expect(page.getByText("Approved").first()).toBeVisible();
@@ -31,8 +42,7 @@ test.describe.serial("review console (signed in as the seeded test lawyer)", () 
   });
 
   test("review console: edit then approve shows a diff", async ({ page }) => {
-    await page.goto("/en/review");
-    await page.getByRole("link").nth(1).click();
+    await openPendingItem(page);
 
     await page.getByRole("button", { name: "Edit then approve" }).click();
     const textarea = page.getByRole("textbox");

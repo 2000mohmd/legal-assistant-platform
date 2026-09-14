@@ -1,23 +1,40 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { apiClient } from "@/lib/api/client";
 import { IntakeForm } from "@/components/documents/intake-form";
 import { DraftedOutput } from "@/components/documents/drafted-output";
+import { MyRequests } from "@/components/documents/my-requests";
 import { NajizNextSteps } from "@/components/documents/najiz-next-steps";
-import type { DraftedDocument, DocumentReviewState, IntakeRequest } from "@/types/documents";
+import type {
+  DocumentRequestSummary,
+  DraftedDocument,
+  DocumentReviewState,
+  IntakeRequest,
+} from "@/types/documents";
 
 export default function MarriageDocumentsPage() {
   const t = useTranslations("documents");
   const common = useTranslations("common");
+  const queryClient = useQueryClient();
   const [demoReviewState, setDemoReviewState] = useState<DocumentReviewState>("pending_lawyer_review");
+
+  const requests = useQuery({
+    queryKey: ["document-requests"],
+    queryFn: () => apiClient.get<{ requests: DocumentRequestSummary[] }>("/api/documents/requests"),
+  });
 
   const mutation = useMutation({
     mutationFn: (data: IntakeRequest) =>
       apiClient.post<{ draft: DraftedDocument }>("/api/documents/intake", data),
-    onSuccess: (res) => setDemoReviewState(res.draft.reviewState),
+    onSuccess: (res) => {
+      setDemoReviewState(res.draft.reviewState);
+      // A submission now creates a real review-queue item for a lawyer
+      // (migration 0002), so the list below is immediately stale.
+      queryClient.invalidateQueries({ queryKey: ["document-requests"] });
+    },
   });
 
   return (
@@ -40,6 +57,15 @@ export default function MarriageDocumentsPage() {
           }
         />
       )}
+
+      <div>
+        <h2 className="mb-3 font-serif text-xl text-ink">{t("myRequestsTitle")}</h2>
+        {requests.isLoading ? (
+          <div className="h-24 animate-pulse rounded-card border border-line bg-white" />
+        ) : (
+          <MyRequests requests={requests.data?.requests ?? []} />
+        )}
+      </div>
 
       <NajizNextSteps />
 

@@ -11,6 +11,14 @@
     "signOut": "Sign out",
     "signIn": "Sign in"
   },
+  "errors": {
+    "unexpectedTitle": "Something went wrong",
+    "unexpectedBody": "This page couldn't be loaded. Your information is safe — nothing was submitted or lost.",
+    "tryAgain": "Try again",
+    "notFoundTitle": "Page not found",
+    "notFoundBody": "The page you're looking for doesn't exist or may have moved.",
+    "backHome": "Back to home"
+  },
   "common": {
     "firmPlaceholder": "[Firm Name]",
     "brandTagline": "A full lawyer in your hand",
@@ -65,6 +73,13 @@
     "templateApprovedBody": "This template and the logic that filled it in were already thoroughly reviewed and approved by a licensed lawyer.",
     "demoToggleLabel": "Demo: switch review state",
     "demoToggleNote": "This toggle is for demonstration only, to show both possible states — the actual default is \"pending review.\"",
+    "myRequestsTitle": "Your requests",
+    "noRequestsYet": "You haven't submitted any requests yet.",
+    "statusPending": "With your lawyer",
+    "statusApproved": "Reviewed & approved",
+    "statusRejected": "Not approved",
+    "deliveredHeading": "Approved by your lawyer",
+    "rejectedBody": "Your lawyer reviewed this and did not approve it as drafted. Please contact the firm to discuss next steps.",
     "najizTitle": "What happens next: the Najiz platform",
     "najizBody": "The marriage contract itself is finalized exclusively by the Ministry of Justice through the Najiz platform, executed by an official marriage officer (ma'zoun). This app does not issue the marriage contract or replace that government process — its role is only to help prepare the conditions and documents you bring to it.",
     "najizCta": "Learn more about the Najiz process"
@@ -73,7 +88,7 @@
     "accessDeniedTitle": "Not authorized",
     "accessDeniedBody": "This console is for the firm's lawyers only. Signed in as {email}.",
     "queueTitle": "Review queue",
-    "colArea": "Practice area",
+    "colRequest": "Request",
     "colSubmitted": "Submitted",
     "colStatus": "Status",
     "colStakes": "Stakes",
