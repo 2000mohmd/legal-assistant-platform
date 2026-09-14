@@ -248,15 +248,47 @@ otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-# Use a production-ready SMTP server
-# [auth.email.smtp]
-# enabled = true
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+# Real email delivery via Resend — OFF by default, on purpose.
+#
+# `enabled = false` here is not a placeholder waiting to be flipped as
+# part of "finishing" this — verified live: when disabled, the CLI
+# ignores every value below (including a garbage host/pass) and points
+# GoTrue at its own local Mailpit container instead. That's exactly the
+# behavior every other dev, CI, and this project's whole Playwright suite
+# depends on — helpers/auth.ts signs in by polling Mailpit's API for the
+# magic-link email, so flipping this to `true` sends real mail through
+# Resend instead and every e2e test that signs in stops finding anything
+# to poll. Keep this `false` in anything committed.
+#
+# To actually receive a real email in a real inbox for manual testing:
+#   1. Copy supabase/.env.example to supabase/.env (gitignored) and put a
+#      real Resend API key in RESEND_API_KEY.
+#   2. Flip `enabled` below to `true`, locally, uncommitted.
+#   3. `supabase stop && supabase start` — SMTP settings are read at
+#      container creation, so a running stack won't pick this up without
+#      that restart (`db reset` alone does not restart auth's container).
+#   4. Flip it back to `false` before running the Playwright suite again.
+#
+# Resend-specific values: "resend" is SMTP's literal, fixed username for
+# every Resend account — it is not a placeholder to replace. The password
+# is the API key itself, not a separate SMTP password Resend issues.
+# admin_email is the visible "From" address; onboarding@resend.dev is
+# Resend's own shared sandbox sender and needs no domain verification, but
+# an account with no verified sending domain can only deliver to the
+# email address the Resend account itself was signed up with — a magic
+# link to any other test address will silently never arrive. Verifying a
+# real domain in the Resend dashboard removes that restriction and is
+# also how admin_email would become a real "[firm]@yourdomain" address
+# later; until then this default is correct for testing sign-in as
+# yourself, but not for testing as an arbitrary user.
+[auth.email.smtp]
+enabled = false
+host = "smtp.resend.com"
+port = 587
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "onboarding@resend.dev"
+sender_name = "Legal Assistant (Demo)"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

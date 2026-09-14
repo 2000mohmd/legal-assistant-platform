@@ -74,6 +74,17 @@ no real mail server in local dev. To reach `/review`, sign in as
 `lawyer@test.local` (seeded with `profiles.role = 'lawyer'`), same flow,
 same local inbox.
 
+**Real email delivery (optional).** By default every environment —
+including this one — sends magic-link mail to Mailpit, never a real
+inbox; that's what the whole Playwright suite depends on
+(`tests/e2e/helpers/auth.ts` signs in by polling Mailpit's API). To
+receive a real email in a real inbox for manual testing, see the comment
+above `[auth.email.smtp]` in `supabase/config.toml` — short version: copy
+`supabase/.env.example` to `supabase/.env` with a real
+[Resend](https://resend.com) API key, flip that block's `enabled` to
+`true` locally (never commit that), then `supabase stop && supabase
+start`. Flip it back to `false` before running the e2e suite again.
+
 If `supabase start` fails claiming Docker/WSL2 can't start: on Windows this
 usually means hardware virtualization is disabled in BIOS/UEFI firmware
 settings (Intel VT-x / AMD-V) — a firmware toggle, not a Windows setting;
@@ -84,16 +95,19 @@ enabling it needs a restart into BIOS during boot.
 ```bash
 npm run test:unit   # Vitest, no Supabase needed — 10/10 passing
 npx playwright install --with-deps chromium   # first time only
-npm run test:e2e    # needs local Supabase running — 14/14 passing
+npm run test:e2e    # needs local Supabase running — 19/19 passing
 ```
 
 Playwright's specs under `/marriage/*` and `/review` sign in for real via
 `tests/e2e/helpers/auth.ts`, which drives the actual magic-link flow
-through Mailpit's REST API. Local Supabase has no data reset between test
-runs, so re-running the suite repeatedly against the same database
-eventually consumes the 3 seeded `review_items` rows (all become
-approved/rejected) — run `supabase db reset` from the repo root first if
-`review.spec.ts` starts failing on "no pending item to act on."
+through Mailpit's REST API. Every lawyer-role test mints its own account
+(`signInAsLawyer`, seeded via `supabase/seed.sql`'s dev-only
+`@lawyer.test.local` promotion) and every review-queue test submits and
+claims its own row, rather than competing for one of the 3 seeded
+`review_items` — so the suite runs fully parallel and repeated runs
+against the same database don't exhaust shared fixtures. `supabase db
+reset` from the repo root gives a clean slate if you want one, but the
+suite doesn't depend on it.
 
 ## Auth & data model
 

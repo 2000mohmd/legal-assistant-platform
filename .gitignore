@@ -6,3 +6,8 @@ __pycache__/
 .ruff_cache/
 dist/
 build/
+
+# Supabase CLI local secrets (e.g. RESEND_API_KEY, referenced from
+# supabase/config.toml via env()). Never commit real credentials here —
+# supabase/.env.example documents the expected keys instead.
+supabase/.env
